@@ -1,9 +1,9 @@
 import random
 from tkinter import *
 from tkinter import messagebox
+import json
+
 def save():
-
-
     website = input_web.get()
     email = input_email.get()
     password = input_pw.get()
@@ -14,15 +14,39 @@ def save():
     elif len(password) ==0:
         password_ok = messagebox.showinfo(title="Missing password",message="Type password di mày")
     else:
+        new_data = { website: {"email":email,
+                               'password':password
+                               }}
+
         is_ok = messagebox.askokcancel(title=website, message= f"Please check your Account/Password:\nEmail: {email}\nPassword: {password}\nIs it ok ma?")
         if is_ok:
-            with open("data.txt", "a") as data_file:
-                data_file.write(f"{website} | {email} | {password}\n")
-                input_web.delete(0,END)
-                input_pw.delete(0,END)
-        else:
-            input_web.delete(0, END)
-            input_pw.delete(0, END)
+            try:
+                with open("data.json","r") as data_file:
+                    # reading old data
+                    data = json.load(data_file)
+                    # update old data with new data
+                    data.update(new_data)
+                    with open("data.json", "w") as data_file:
+                        # saving
+                        json.dump(data, data_file, indent=4)
+            except:
+                with open("data.json", "w") as data_file:
+                    json.dump(new_data, data_file, indent=4)
+            finally:
+                input_web.delete(0, END)
+                input_pw.delete(0, END)
+
+def search_pass():
+    web = input_web.get()
+    with open("data.json", "r") as data_file:
+        data = json.load(data_file)
+        try:
+            if len(data[web]) > 0:
+                messagebox.showinfo(title=f"{web}",message=f"website: {web}\nemail: {data[web]['email']}\npassword: {data[web]['password']}")
+
+        except:
+            messagebox.showinfo(title="error",message="No information")
+
 
 # ---------------------------- PASSWORD GENERATOR ------------------------------- #
 
@@ -85,7 +109,7 @@ password.grid(row=3, column=0)
 
 # Website input
 input_web = Entry()
-input_web.grid(column=1, row=1, columnspan=2,sticky="EW")
+input_web.grid(column=1, row=1,sticky="EW")
 input_web.focus()
 
 # Email input
@@ -96,6 +120,11 @@ input_email.insert(END, "huusonbkhcm@gmail.com")
 # Password input
 input_pw= Entry()
 input_pw.grid(column=1, row=3,sticky="EW")
+
+# Generate button
+search_button = Button(text="Search", command = search_pass)
+search_button.grid(column=2, row=1,sticky="EW")
+
 
 # Generate button
 generate_button = Button(text="Generate Password", command = pw_generate)
